@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { buildFormsPrefillUrl } from '../lib/msFormsUrl';
 
 const inputStyle = {
   width: '100%', background: '#011526', border: '1px solid rgba(114,163,196,.28)', borderRadius: 9,
@@ -9,6 +10,7 @@ const labelStyle = { fontSize: 11, fontWeight: 600, letterSpacing: '.04em', text
 export default function RequestModal({ accent, onClose }) {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
+  const [formsUrl, setFormsUrl] = useState('');
   const nombreRef = useRef(null);
   const emailRef = useRef(null);
   const equipoRef = useRef(null);
@@ -25,8 +27,13 @@ export default function RequestModal({ accent, onClose }) {
   const submit = () => {
     const nombre = (nombreRef.current?.value || '').trim();
     const email = (emailRef.current?.value || '').trim();
+    const equipo = (equipoRef.current?.value || '').trim();
     const tipo = (tipoRef.current?.value || '').trim();
+    const duracion = (duracionRef.current?.value || '').trim();
+    const fecha = (fechaRef.current?.value || '').trim();
     const objetivo = (objetivoRef.current?.value || '').trim();
+    const referencias = (refRef.current?.value || '').trim();
+
     if (!nombre || !email || !tipo || !objetivo) {
       setError('Completa los campos marcados con *');
       return;
@@ -35,6 +42,10 @@ export default function RequestModal({ accent, onClose }) {
       setError('Ingresa un email válido');
       return;
     }
+
+    const url = buildFormsPrefillUrl({ nombre, email, equipo, tipo, duracion, fecha, objetivo, referencias });
+    window.open(url, '_blank', 'noopener');
+    setFormsUrl(url);
     setError('');
     setSent(true);
   };
@@ -56,8 +67,11 @@ export default function RequestModal({ accent, onClose }) {
             <div style={{ width: 64, height: 64, borderRadius: '50%', margin: '0 auto 20px', background: 'rgba(25,247,241,.14)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2.6"><path d="M20 6L9 17l-5-5" /></svg>
             </div>
-            <h3 style={{ fontSize: 22, fontWeight: 800, margin: '0 0 10px', color: '#fff' }}>¡Solicitud enviada!</h3>
-            <p style={{ fontSize: 14, color: '#B9C9DC', margin: '0 auto 26px', maxWidth: 420 }}>Gracias. Recibimos tu solicitud y te contactaremos pronto para dar vida a tu video.</p>
+            <h3 style={{ fontSize: 22, fontWeight: 800, margin: '0 0 10px', color: '#fff' }}>Un paso más</h3>
+            <p style={{ fontSize: 14, color: '#B9C9DC', margin: '0 auto 12px', maxWidth: 420 }}>Abrimos el formulario de Microsoft en una pestaña nueva con tus datos precargados. Revisalos y hacé clic en <strong>Enviar</strong> ahí para completar tu solicitud.</p>
+            <p style={{ fontSize: 13, margin: '0 auto 26px', maxWidth: 420 }}>
+              ¿No se abrió? <a href={formsUrl} target="_blank" rel="noopener noreferrer">Abrí el formulario acá</a>.
+            </p>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
               <div className="awk-btn" onClick={() => { setSent(false); setError(''); }} style={{ background: 'rgba(114,163,196,.16)', color: '#fff', fontWeight: 600, fontSize: 14, padding: '11px 22px', borderRadius: 8, cursor: 'pointer', border: '1px solid rgba(114,163,196,.3)' }}>Enviar otra</div>
               <div className="awk-btn" onClick={onClose} style={{ background: accent, color: '#011024', fontWeight: 700, fontSize: 14, padding: '11px 24px', borderRadius: 8, cursor: 'pointer' }}>Volver al inicio</div>
