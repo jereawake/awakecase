@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Nav from './components/Nav';
 import Hero from './components/Hero';
 import SearchResults from './components/SearchResults';
@@ -8,7 +8,8 @@ import CtaBanner from './components/CtaBanner';
 import VideoModal from './components/VideoModal';
 import RequestModal from './components/RequestModal';
 import Footer from './components/Footer';
-import { all, rows, heroItems } from './data';
+import { all, categories, rowMeta, heroItems } from './data';
+import { listExtraVideos } from './lib/adminApi';
 
 const ACCENT = '#19F7F1';
 const ACCENT_DEEP = '#0B93AA';
@@ -22,6 +23,11 @@ export default function App() {
   const [heroMuted, setHeroMuted] = useState(true);
   const [modal, setModal] = useState(null);
   const [reqOpen, setReqOpen] = useState(false);
+  const [extra, setExtra] = useState([]);
+
+  useEffect(() => {
+    listExtraVideos().then(setExtra).catch(() => {});
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setNavScrolled(window.scrollY > 60);
@@ -36,6 +42,15 @@ export default function App() {
     }, HERO_ROTATE_MS);
     return () => clearInterval(t);
   }, [modal, reqOpen]);
+
+  const allVideos = useMemo(() => [...all, ...extra], [extra]);
+  const rows = useMemo(
+    () => rowMeta.map((row) => ({
+      ...row,
+      items: [...categories[row.key], ...extra.filter((v) => v.cat === row.key)],
+    })),
+    [extra]
+  );
 
   const openVideo = (item) => {
     setModal(item);
@@ -58,7 +73,7 @@ export default function App() {
   const q = query.trim().toLowerCase();
   const searchActive = q.length > 0;
   const results = searchActive
-    ? all.filter((v) => (v.title + ' ' + v.tag + ' ' + v.desc).toLowerCase().includes(q))
+    ? allVideos.filter((v) => (v.title + ' ' + v.tag + ' ' + v.desc).toLowerCase().includes(q))
     : [];
 
   return (
@@ -103,7 +118,7 @@ export default function App() {
       )}
 
       {modal && (
-        <VideoModal item={modal} accent={ACCENT} accentDeep={ACCENT_DEEP} onClose={closeModal} onOpen={openVideo} />
+        <VideoModal item={modal} allVideos={allVideos} accent={ACCENT} accentDeep={ACCENT_DEEP} onClose={closeModal} onOpen={openVideo} />
       )}
 
       {reqOpen && (

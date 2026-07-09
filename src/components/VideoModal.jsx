@@ -1,8 +1,7 @@
-import { all } from '../data';
 import VideoCard from './VideoCard';
 
-export default function VideoModal({ item, accent, accentDeep, onClose, onOpen }) {
-  const related = all.filter((v) => v.cat === item.cat && v.id !== item.id).slice(0, 3);
+export default function VideoModal({ item, allVideos, accent, accentDeep, onClose, onOpen }) {
+  const related = allVideos.filter((v) => v.cat === item.cat && v.id !== item.id).slice(0, 3);
 
   const backdropClick = (e) => {
     if (e.target === e.currentTarget || !e.target.closest('[data-stop]')) onClose();

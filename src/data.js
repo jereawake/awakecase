@@ -36,11 +36,13 @@ export const heroItems = ['viv-com', 'comp', 'viv-imm', 'showroom'].map(byId);
 const topOrder = ['viv-com', 'comp', 'viv-imm', 'showroom', 'int-awk', 'pass', 'wom', 'rfk', 'int-ab', 'dtp'];
 export const top10 = topOrder.map((id, i) => ({ ...byId(id), rank: i + 1 }));
 
-export const rows = [
-  { key: 'cursos', label: 'Cursos', note: 'presentaciones de programas', items: cursos },
-  { key: 'brand', label: 'Brand films', note: 'identidad y relato de marca', items: brand, ctaAfter: true },
-  { key: 'intros', label: 'Intros y bumpers', note: 'sellos de apertura', items: intros },
-  { key: 'eventos', label: 'Eventos y espacios', note: 'experiencias presenciales', items: eventos },
+// Layout only — item lists are assembled at runtime in App.jsx by merging
+// these seed categories with videos added through the admin panel.
+export const rowMeta = [
+  { key: 'cursos', label: 'Cursos', note: 'presentaciones de programas' },
+  { key: 'brand', label: 'Brand films', note: 'identidad y relato de marca', ctaAfter: true },
+  { key: 'intros', label: 'Intros y bumpers', note: 'sellos de apertura' },
+  { key: 'eventos', label: 'Eventos y espacios', note: 'experiencias presenciales' },
 ];
 
 export const navItems = [

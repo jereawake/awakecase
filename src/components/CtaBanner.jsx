@@ -2,7 +2,7 @@ export default function CtaBanner({ accent, onOpenReq }) {
   return (
     <section style={{ position: 'relative', margin: '8px 56px 46px', borderRadius: 18, overflow: 'hidden', minHeight: 308, display: 'flex', alignItems: 'center', background: 'radial-gradient(135% 155% at 12% 12%, #01406e 0%, #012648 42%, #010F22 100%)' }}>
       <div style={{ position: 'absolute', right: -30, top: '50%', transform: 'translateY(-50%)', width: 360, height: 360, opacity: .10 }}>
-        <img src="/assets/awakelab-logo.png" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+        <img src="/assets/Version-blanca.png" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
       </div>
       <div style={{ position: 'absolute', right: '8%', top: '-32%', width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle,rgba(25,247,241,.22),transparent 60%)' }} />
       <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg,rgba(1,15,34,.6),transparent 66%)' }} />

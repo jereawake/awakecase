@@ -15,7 +15,7 @@ export default function Nav({ accent, navScrolled, query, onSearch, onGoHome, on
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 34 }}>
         <div onClick={onGoHome} style={{ display: 'flex', alignItems: 'center', gap: 11, cursor: 'pointer' }}>
-          <img src="/assets/awakelab-logo.png" alt="Awakelab" style={{ height: 38, width: 'auto', display: 'block', objectFit: 'contain' }} />
+          <img src="/assets/Version-blanca.png" alt="Awakelab" style={{ height: 38, width: 'auto', display: 'block', objectFit: 'contain' }} />
           <span style={{ fontWeight: 700, fontSize: 20, letterSpacing: '-.02em', color: '#fff' }}>awakelab</span>
           <span style={{ fontWeight: 600, fontSize: 11, letterSpacing: '.24em', color: accent, textTransform: 'uppercase', paddingTop: 3 }}>Studio</span>
         </div>
