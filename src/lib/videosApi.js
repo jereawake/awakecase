@@ -51,6 +51,17 @@ export async function deleteVideo(password, id) {
   }
 }
 
+export async function generateDescription(password, payload) {
+  const res = await fetch('/api/generate-description', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-admin-password': password },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'No se pudo generar la descripción.');
+  return data.desc;
+}
+
 export async function likeVideo(id) {
   const res = await fetch('/api/videos/like', {
     method: 'POST',

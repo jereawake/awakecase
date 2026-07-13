@@ -11,7 +11,7 @@ export default function Top10Row({ items, accent, accentSoft, accentDeep, onOpen
         <div id="scr-top10" className="awk-scroller" style={{ display: 'flex', gap: 14, overflowX: 'auto', padding: '20px 56px', scrollPaddingLeft: 56 }}>
           {items.map((item) => (
             <div key={item.id} onClick={() => onOpen(item)} style={{ display: 'flex', alignItems: 'flex-end', flex: '0 0 auto', cursor: 'pointer' }}>
-              <span style={{ fontSize: 150, lineHeight: .7, fontWeight: 900, color: 'transparent', WebkitTextStroke: `2.5px ${accentSoft}`, marginRight: -8, userSelect: 'none' }}>{item.rank}</span>
+              <span style={{ position: 'relative', zIndex: 2, fontSize: 150, lineHeight: .7, fontWeight: 900, color: 'transparent', WebkitTextStroke: `2.5px ${accentSoft}`, marginRight: -8, userSelect: 'none' }}>{item.rank}</span>
               <VideoCard item={item} accent={accent} accentDeep={accentDeep} variant="top10" liked={likedIds?.has(item.id)} onLike={onLike} />
             </div>
           ))}

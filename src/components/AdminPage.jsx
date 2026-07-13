@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { rowMeta } from '../data';
-import { login, listVideos, addVideo, editVideo, deleteVideo } from '../lib/videosApi';
+import { login, listVideos, addVideo, editVideo, deleteVideo, generateDescription } from '../lib/videosApi';
 
 const ACCENT = '#19F7F1';
 const SESSION_KEY = 'awk_admin_pw';
@@ -124,11 +124,27 @@ function VideoRow({ video, disabledStar, onDragStart, onToggleStar, onDelete, ed
   );
 }
 
+function TabButton({ active, onClick, children }) {
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        fontSize: 14, fontWeight: 700, padding: '10px 20px', borderRadius: 10, cursor: 'pointer',
+        background: active ? ACCENT : 'rgba(114,163,196,.12)',
+        color: active ? '#011024' : '#B9C9DC',
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
 export default function AdminPage() {
   const [password, setPassword] = useState('');
   const [authed, setAuthed] = useState(false);
   const [checking, setChecking] = useState(true);
   const [loginError, setLoginError] = useState('');
+  const [tab, setTab] = useState('upload');
 
   const [videos, setVideos] = useState([]);
   const [loadingList, setLoadingList] = useState(false);
@@ -140,6 +156,7 @@ export default function AdminPage() {
   const [formError, setFormError] = useState('');
   const [formSuccess, setFormSuccess] = useState('');
   const [busy, setBusy] = useState(false);
+  const [aiBusy, setAiBusy] = useState(false);
 
   useEffect(() => {
     const saved = sessionStorage.getItem(SESSION_KEY);
@@ -173,6 +190,20 @@ export default function AdminPage() {
 
   const heroCount = videos.filter((v) => v.heroFeatured).length;
   const heroList = videos.filter((v) => v.heroFeatured).sort((a, b) => (a.heroOrder || 0) - (b.heroOrder || 0));
+
+  const generateDesc = async () => {
+    if (!form.title || aiBusy) return;
+    setFormError('');
+    setAiBusy(true);
+    try {
+      const desc = await generateDescription(password, { title: form.title, title2: form.title2, tag: form.tag, cat: form.cat });
+      setForm((f) => ({ ...f, desc }));
+    } catch (e) {
+      setFormError(e.message);
+    } finally {
+      setAiBusy(false);
+    }
+  };
 
   const submitVideo = async () => {
     setFormError('');
@@ -275,116 +306,139 @@ export default function AdminPage() {
     <div style={{ minHeight: '100vh', padding: '48px 24px', maxWidth: 860, margin: '0 auto' }}>
       <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.2em', textTransform: 'uppercase', color: ACCENT, marginBottom: 8 }}>Awakelab Studio</div>
       <h1 style={{ fontSize: 26, fontWeight: 800, margin: '0 0 6px', color: '#fff' }}>Panel de administración</h1>
-      <p style={{ fontSize: 13.5, color: '#9FB4CC', margin: '0 0 28px' }}>Agregá, editá y organizá los videos del catálogo. Arrastrá un video a otra categoría para moverlo.</p>
+      <p style={{ fontSize: 13.5, color: '#9FB4CC', margin: '0 0 24px' }}>Subí videos nuevos o reorganizá el catálogo existente.</p>
+
+      <div style={{ display: 'flex', gap: 10, marginBottom: 28 }}>
+        <TabButton active={tab === 'upload'} onClick={() => setTab('upload')}>Subir video</TabButton>
+        <TabButton active={tab === 'organize'} onClick={() => setTab('organize')}>Organizar</TabButton>
+      </div>
 
       {listError && <div style={{ color: '#ff9090', fontSize: 13, marginBottom: 16 }}>{listError}</div>}
 
-      {/* Hero lineup */}
-      <div style={{ background: '#02182f', border: '1px solid rgba(114,163,196,.18)', borderRadius: 16, padding: '22px 24px', marginBottom: 28 }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 4 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: '#fff' }}>Hero destacados</h2>
-          <span style={{ fontSize: 12, color: '#72A3C4' }}>{heroCount}/{MAX_HERO}</span>
-        </div>
-        <p style={{ fontSize: 12.5, color: '#72A3C4', margin: '0 0 14px' }}>Tocá la estrella ★ en cualquier video para sumarlo aquí. Se muestran en el orden en que los marcaste.</p>
-        {heroList.length === 0 ? (
-          <div style={{ color: '#72A3C4', fontSize: 13.5 }}>Ningún video destacado todavía.</div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {heroList.map((v, i) => (
-              <div key={v.id} style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#011830', borderRadius: 8, padding: '9px 12px' }}>
-                <span style={{ fontSize: 12, fontWeight: 700, color: ACCENT, width: 18 }}>{i + 1}</span>
-                <span style={{ fontSize: 13.5, fontWeight: 600, flex: 1 }}>{v.title}</span>
-                <div className="awk-btn" onClick={() => toggleStar(v)} style={{ fontSize: 11.5, fontWeight: 600, color: '#ff9090', cursor: 'pointer' }}>Quitar</div>
+      {tab === 'upload' && (
+        <div style={{ background: '#02182f', border: '1px solid rgba(114,163,196,.18)', borderRadius: 16, padding: '26px 28px' }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 18px', color: '#fff' }}>Agregar video</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div>
+              <label style={labelStyle}>Título *</label>
+              <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Ej. Nombre del video" style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Subtítulo</label>
+              <input value={form.title2} onChange={(e) => setForm({ ...form, title2: e.target.value })} placeholder="Ej. Módulo 2 · Sincrónico" style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Etiqueta *</label>
+              <select value={form.tag} onChange={(e) => setForm({ ...form, tag: e.target.value })} style={{ ...inputStyle, cursor: 'pointer' }}>
+                <option value="">Selecciona…</option>
+                {TAG_OPTIONS.map((t) => <option key={t}>{t}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={labelStyle}>Fila / categoría *</label>
+              <select value={form.cat} onChange={(e) => setForm({ ...form, cat: e.target.value })} style={{ ...inputStyle, cursor: 'pointer' }}>
+                <option value="">Selecciona…</option>
+                {rowMeta.map((r) => <option key={r.key} value={r.key}>{r.label}</option>)}
+              </select>
+            </div>
+          </div>
+          <div style={{ marginTop: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <label style={labelStyle}>Descripción</label>
+              <div
+                onClick={generateDesc}
+                title={!form.title ? 'Completa el título primero' : 'Generar con IA a partir del título, etiqueta y categoría'}
+                style={{
+                  fontSize: 11.5, fontWeight: 600, color: form.title && !aiBusy ? ACCENT : '#4a6478',
+                  cursor: form.title && !aiBusy ? 'pointer' : 'not-allowed', marginBottom: 7,
+                }}
+              >
+                {aiBusy ? 'Generando…' : '✨ Generar con IA'}
               </div>
-            ))}
+            </div>
+            <textarea value={form.desc} onChange={(e) => setForm({ ...form, desc: e.target.value })} rows={3} placeholder="Descripción breve del video" style={{ ...inputStyle, resize: 'vertical', minHeight: 80 }} />
+            <p style={{ fontSize: 11.5, color: '#4a6478', margin: '6px 0 0' }}>La IA sugiere una descripción a partir del título, etiqueta y categoría (no analiza el video real) — revisala antes de guardar.</p>
           </div>
-        )}
-      </div>
+          <div style={{ marginTop: 16 }}>
+            <label style={labelStyle}>URL del video (video-manager.awakelab.world) *</label>
+            <input value={form.src} onChange={(e) => setForm({ ...form, src: e.target.value })} placeholder="https://video-manager.awakelab.world/…" style={inputStyle} />
+          </div>
+          {formError && <div style={{ color: '#ff9090', fontSize: 13, marginTop: 14 }}>{formError}</div>}
+          {formSuccess && <div style={{ color: ACCENT, fontSize: 13, marginTop: 14 }}>{formSuccess}</div>}
+          <div className="awk-btn" onClick={busy ? undefined : submitVideo} style={{ marginTop: 20, background: ACCENT, color: '#011024', fontWeight: 700, fontSize: 15, padding: '14px 0', borderRadius: 10, cursor: busy ? 'default' : 'pointer', textAlign: 'center', opacity: busy ? 0.6 : 1 }}>
+            {busy ? 'Agregando…' : 'Agregar video'}
+          </div>
+        </div>
+      )}
 
-      {/* Add video form */}
-      <div style={{ background: '#02182f', border: '1px solid rgba(114,163,196,.18)', borderRadius: 16, padding: '26px 28px', marginBottom: 32 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 18px', color: '#fff' }}>Agregar video</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-          <div>
-            <label style={labelStyle}>Título *</label>
-            <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Ej. Nombre del video" style={inputStyle} />
-          </div>
-          <div>
-            <label style={labelStyle}>Subtítulo</label>
-            <input value={form.title2} onChange={(e) => setForm({ ...form, title2: e.target.value })} placeholder="Ej. Módulo 2 · Sincrónico" style={inputStyle} />
-          </div>
-          <div>
-            <label style={labelStyle}>Etiqueta *</label>
-            <select value={form.tag} onChange={(e) => setForm({ ...form, tag: e.target.value })} style={{ ...inputStyle, cursor: 'pointer' }}>
-              <option value="">Selecciona…</option>
-              {TAG_OPTIONS.map((t) => <option key={t}>{t}</option>)}
-            </select>
-          </div>
-          <div>
-            <label style={labelStyle}>Fila / categoría *</label>
-            <select value={form.cat} onChange={(e) => setForm({ ...form, cat: e.target.value })} style={{ ...inputStyle, cursor: 'pointer' }}>
-              <option value="">Selecciona…</option>
-              {rowMeta.map((r) => <option key={r.key} value={r.key}>{r.label}</option>)}
-            </select>
-          </div>
-        </div>
-        <div style={{ marginTop: 16 }}>
-          <label style={labelStyle}>Descripción</label>
-          <textarea value={form.desc} onChange={(e) => setForm({ ...form, desc: e.target.value })} rows={3} placeholder="Descripción breve del video" style={{ ...inputStyle, resize: 'vertical', minHeight: 80 }} />
-        </div>
-        <div style={{ marginTop: 16 }}>
-          <label style={labelStyle}>URL del video (video-manager.awakelab.world) *</label>
-          <input value={form.src} onChange={(e) => setForm({ ...form, src: e.target.value })} placeholder="https://video-manager.awakelab.world/…" style={inputStyle} />
-        </div>
-        {formError && <div style={{ color: '#ff9090', fontSize: 13, marginTop: 14 }}>{formError}</div>}
-        {formSuccess && <div style={{ color: ACCENT, fontSize: 13, marginTop: 14 }}>{formSuccess}</div>}
-        <div className="awk-btn" onClick={busy ? undefined : submitVideo} style={{ marginTop: 20, background: ACCENT, color: '#011024', fontWeight: 700, fontSize: 15, padding: '14px 0', borderRadius: 10, cursor: busy ? 'default' : 'pointer', textAlign: 'center', opacity: busy ? 0.6 : 1 }}>
-          {busy ? 'Agregando…' : 'Agregar video'}
-        </div>
-      </div>
-
-      {/* Category sections */}
-      {loadingList && <div style={{ color: '#72A3C4', fontSize: 14 }}>Cargando…</div>}
-      {!loadingList && rowMeta.map((row) => {
-        const items = videos.filter((v) => v.cat === row.key);
-        const isDragOver = dragOverCat === row.key;
-        return (
-          <div
-            key={row.key}
-            onDragOver={(e) => { e.preventDefault(); setDragOverCat(row.key); }}
-            onDragLeave={() => setDragOverCat((c) => (c === row.key ? null : c))}
-            onDrop={(e) => onDropOnCat(e, row.key)}
-            style={{
-              marginBottom: 24, padding: 16, borderRadius: 14,
-              border: isDragOver ? `1.5px dashed ${ACCENT}` : '1.5px dashed transparent',
-              background: isDragOver ? 'rgba(25,247,241,.05)' : 'transparent',
-              transition: 'background .15s, border-color .15s',
-            }}
-          >
-            <h2 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 12px', color: '#fff' }}>{row.label} <span style={{ fontSize: 12, color: '#72A3C4', fontWeight: 500 }}>({items.length})</span></h2>
-            {items.length === 0 ? (
-              <div style={{ color: '#72A3C4', fontSize: 13.5, padding: '10px 0' }}>Sin videos en esta categoría — arrastrá uno aquí.</div>
+      {tab === 'organize' && (
+        <>
+          {/* Hero lineup */}
+          <div style={{ background: '#02182f', border: '1px solid rgba(114,163,196,.18)', borderRadius: 16, padding: '22px 24px', marginBottom: 28 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 4 }}>
+              <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: '#fff' }}>Hero destacados</h2>
+              <span style={{ fontSize: 12, color: '#72A3C4' }}>{heroCount}/{MAX_HERO}</span>
+            </div>
+            <p style={{ fontSize: 12.5, color: '#72A3C4', margin: '0 0 14px' }}>Tocá la estrella ★ en cualquier video para sumarlo aquí. Se muestran en el orden en que los marcaste.</p>
+            {heroList.length === 0 ? (
+              <div style={{ color: '#72A3C4', fontSize: 13.5 }}>Ningún video destacado todavía.</div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {items.map((v) => (
-                  <VideoRow
-                    key={v.id}
-                    video={v}
-                    disabledStar={heroCount >= MAX_HERO && !v.heroFeatured}
-                    onDragStart={onDragStart}
-                    onToggleStar={() => toggleStar(v)}
-                    onDelete={removeVideo}
-                    editing={editingId === v.id}
-                    onStartEdit={setEditingId}
-                    onCancelEdit={() => setEditingId(null)}
-                    onSaveEdit={saveEdit}
-                  />
+                {heroList.map((v, i) => (
+                  <div key={v.id} style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#011830', borderRadius: 8, padding: '9px 12px' }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: ACCENT, width: 18 }}>{i + 1}</span>
+                    <span style={{ fontSize: 13.5, fontWeight: 600, flex: 1 }}>{v.title}</span>
+                    <div className="awk-btn" onClick={() => toggleStar(v)} style={{ fontSize: 11.5, fontWeight: 600, color: '#ff9090', cursor: 'pointer' }}>Quitar</div>
+                  </div>
                 ))}
               </div>
             )}
           </div>
-        );
-      })}
+
+          {/* Category sections */}
+          {loadingList && <div style={{ color: '#72A3C4', fontSize: 14 }}>Cargando…</div>}
+          {!loadingList && rowMeta.map((row) => {
+            const items = videos.filter((v) => v.cat === row.key);
+            const isDragOver = dragOverCat === row.key;
+            return (
+              <div
+                key={row.key}
+                onDragOver={(e) => { e.preventDefault(); setDragOverCat(row.key); }}
+                onDragLeave={() => setDragOverCat((c) => (c === row.key ? null : c))}
+                onDrop={(e) => onDropOnCat(e, row.key)}
+                style={{
+                  marginBottom: 24, padding: 16, borderRadius: 14,
+                  border: isDragOver ? `1.5px dashed ${ACCENT}` : '1.5px dashed transparent',
+                  background: isDragOver ? 'rgba(25,247,241,.05)' : 'transparent',
+                  transition: 'background .15s, border-color .15s',
+                }}
+              >
+                <h2 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 12px', color: '#fff' }}>{row.label} <span style={{ fontSize: 12, color: '#72A3C4', fontWeight: 500 }}>({items.length})</span></h2>
+                {items.length === 0 ? (
+                  <div style={{ color: '#72A3C4', fontSize: 13.5, padding: '10px 0' }}>Sin videos en esta categoría — arrastrá uno aquí.</div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {items.map((v) => (
+                      <VideoRow
+                        key={v.id}
+                        video={v}
+                        disabledStar={heroCount >= MAX_HERO && !v.heroFeatured}
+                        onDragStart={onDragStart}
+                        onToggleStar={() => toggleStar(v)}
+                        onDelete={removeVideo}
+                        editing={editingId === v.id}
+                        onStartEdit={setEditingId}
+                        onCancelEdit={() => setEditingId(null)}
+                        onSaveEdit={saveEdit}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </>
+      )}
     </div>
   );
 }
