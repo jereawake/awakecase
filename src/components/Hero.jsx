@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
-import { heroItems } from '../data';
+import { LikeButton } from './VideoCard';
 
-export default function Hero({ heroIdx, muted, accent, onOpen, onToggleMute, onSetHero }) {
+export default function Hero({ items: heroItems, heroIdx, muted, accent, onOpen, onToggleMute, onSetHero, likedIds, onLike }) {
   const heroARef = useRef(null);
   const heroBRef = useRef(null);
   const textRef = useRef(null);
@@ -87,6 +87,7 @@ export default function Hero({ heroIdx, muted, accent, onOpen, onToggleMute, onS
           <div className="awk-btn" onClick={() => onOpen(item)} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(114,163,196,.22)', backdropFilter: 'blur(8px)', color: '#fff', fontWeight: 600, fontSize: 15, padding: '13px 26px', borderRadius: 8, cursor: 'pointer', border: '1px solid rgba(114,163,196,.3)' }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><circle cx="12" cy="12" r="9" /><path d="M12 11v5M12 8h.01" /></svg>Más información
           </div>
+          <LikeButton item={item} liked={likedIds?.has(item.id)} onLike={onLike} size="md" />
         </div>
       </div>
 

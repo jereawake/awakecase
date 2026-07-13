@@ -1,6 +1,6 @@
-import VideoCard from './VideoCard';
+import VideoCard, { LikeButton } from './VideoCard';
 
-export default function VideoModal({ item, allVideos, accent, accentDeep, onClose, onOpen }) {
+export default function VideoModal({ item, allVideos, accent, accentDeep, onClose, onOpen, likedIds, onLike }) {
   const related = allVideos.filter((v) => v.cat === item.cat && v.id !== item.id).slice(0, 3);
 
   const backdropClick = (e) => {
@@ -21,7 +21,10 @@ export default function VideoModal({ item, allVideos, accent, accentDeep, onClos
             <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.16em', textTransform: 'uppercase', color: accent }}>{item.tag}</span>
             <span style={{ fontSize: 11, color: '#72A3C4' }}>Awakelab · 2026</span>
           </div>
-          <h2 style={{ fontSize: 30, fontWeight: 800, letterSpacing: '-.02em', margin: '0 0 12px' }}>{item.title}</h2>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+            <h2 style={{ fontSize: 30, fontWeight: 800, letterSpacing: '-.02em', margin: '0 0 12px' }}>{item.title}</h2>
+            <div style={{ flexShrink: 0, marginTop: 4 }}><LikeButton item={item} liked={likedIds?.has(item.id)} onLike={onLike} size="md" /></div>
+          </div>
           <p style={{ fontSize: 15, lineHeight: 1.65, color: '#C7D4E6', margin: 0, maxWidth: 640 }}>{item.desc}</p>
 
           {related.length > 0 && (
@@ -29,7 +32,7 @@ export default function VideoModal({ item, allVideos, accent, accentDeep, onClos
               <div style={{ fontSize: 13, fontWeight: 700, color: '#B9C9DC', marginBottom: 14 }}>Más en {item.tag}</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12 }}>
                 {related.map((r) => (
-                  <VideoCard key={r.id} item={r} accent={accent} accentDeep={accentDeep} onOpen={onOpen} variant="related" />
+                  <VideoCard key={r.id} item={r} accent={accent} accentDeep={accentDeep} onOpen={onOpen} variant="related" liked={likedIds?.has(r.id)} onLike={onLike} />
                 ))}
               </div>
             </div>

@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import VideoCard from './VideoCard';
 
-export default function CategoryRow({ row, accent, accentDeep, onOpen }) {
+export default function CategoryRow({ row, accent, accentDeep, onOpen, likedIds, onLike }) {
   const scrId = 'scr-' + row.key;
   const secId = 'sec-' + row.key;
   const scrollerRef = useRef(null);
@@ -26,7 +26,7 @@ export default function CategoryRow({ row, accent, accentDeep, onOpen }) {
         </div>
         <div ref={scrollerRef} id={scrId} className="awk-scroller" style={{ display: 'flex', gap: 12, overflowX: 'auto', padding: '14px 56px', scrollPaddingLeft: 56 }}>
           {row.items.map((item) => (
-            <VideoCard key={item.id} item={item} accent={accent} accentDeep={accentDeep} onOpen={onOpen} variant="row" />
+            <VideoCard key={item.id} item={item} accent={accent} accentDeep={accentDeep} onOpen={onOpen} variant="row" liked={likedIds?.has(item.id)} onLike={onLike} />
           ))}
         </div>
       </div>

@@ -8,12 +8,12 @@ import CtaBanner from './components/CtaBanner';
 import VideoModal from './components/VideoModal';
 import RequestModal from './components/RequestModal';
 import Footer from './components/Footer';
-import { all, categories, rowMeta, heroItems } from './data';
-import { listExtraVideos } from './lib/adminApi';
+import { rowMeta } from './data';
+import { listVideos, likeVideo } from './lib/videosApi';
+import { getLikedIds, markLiked } from './lib/likedStore';
 
 const ACCENT = '#19F7F1';
 const ACCENT_DEEP = '#0B93AA';
-const SHOW_TOP10 = true;
 const HERO_ROTATE_MS = 9000;
 
 export default function App() {
@@ -23,10 +23,12 @@ export default function App() {
   const [heroMuted, setHeroMuted] = useState(true);
   const [modal, setModal] = useState(null);
   const [reqOpen, setReqOpen] = useState(false);
-  const [extra, setExtra] = useState([]);
+  const [videos, setVideos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [likedIds, setLikedIds] = useState(() => getLikedIds());
 
   useEffect(() => {
-    listExtraVideos().then(setExtra).catch(() => {});
+    listVideos().then(setVideos).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
@@ -35,28 +37,45 @@ export default function App() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  useEffect(() => {
-    const t = setInterval(() => {
-      if (modal || reqOpen) return;
-      setHeroIdx((i) => (i + 1) % heroItems.length);
-    }, HERO_ROTATE_MS);
-    return () => clearInterval(t);
-  }, [modal, reqOpen]);
+  const heroList = useMemo(() => {
+    const starred = videos.filter((v) => v.heroFeatured).sort((a, b) => (a.heroOrder || 0) - (b.heroOrder || 0));
+    return starred.length ? starred : videos.slice(0, 5);
+  }, [videos]);
 
-  const allVideos = useMemo(() => [...all, ...extra], [extra]);
   const rows = useMemo(
-    () => rowMeta.map((row) => ({
-      ...row,
-      items: [...categories[row.key], ...extra.filter((v) => v.cat === row.key)],
-    })),
-    [extra]
+    () => rowMeta.map((row) => ({ ...row, items: videos.filter((v) => v.cat === row.key) })),
+    [videos]
   );
 
+  const top10 = useMemo(
+    () => [...videos].sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 10).map((v, i) => ({ ...v, rank: i + 1 })),
+    [videos]
+  );
+
+  useEffect(() => {
+    const t = setInterval(() => {
+      if (modal || reqOpen || heroList.length < 2) return;
+      setHeroIdx((i) => (i + 1) % heroList.length);
+    }, HERO_ROTATE_MS);
+    return () => clearInterval(t);
+  }, [modal, reqOpen, heroList.length]);
+
+  const onLike = async (id) => {
+    if (likedIds.has(id)) return;
+    try {
+      const { likes } = await likeVideo(id);
+      setVideos((prev) => prev.map((v) => (v.id === id ? { ...v, likes } : v)));
+      markLiked(id);
+      setLikedIds((prev) => new Set(prev).add(id));
+    } catch (_) {}
+  };
+
   const openVideo = (item) => {
-    setModal(item);
+    setModal(item.id);
     setQuery('');
     window.scrollTo({ top: 0 });
   };
+  const modalItem = modal ? videos.find((v) => v.id === modal) : null;
   const closeModal = () => setModal(null);
   const goHome = () => {
     setModal(null);
@@ -73,8 +92,10 @@ export default function App() {
   const q = query.trim().toLowerCase();
   const searchActive = q.length > 0;
   const results = searchActive
-    ? allVideos.filter((v) => (v.title + ' ' + v.tag + ' ' + v.desc).toLowerCase().includes(q))
+    ? videos.filter((v) => (v.title + ' ' + v.tag + ' ' + v.desc).toLowerCase().includes(q))
     : [];
+
+  if (loading) return <div style={{ minHeight: '100vh' }} />;
 
   return (
     <div style={{ minHeight: '100vh', position: 'relative' }}>
@@ -88,26 +109,31 @@ export default function App() {
       />
 
       {searchActive ? (
-        <SearchResults query={query} results={results} accent={ACCENT} accentDeep={ACCENT_DEEP} onOpen={openVideo} />
+        <SearchResults query={query} results={results} accent={ACCENT} accentDeep={ACCENT_DEEP} onOpen={openVideo} likedIds={likedIds} onLike={onLike} />
       ) : (
         <div>
-          <Hero
-            heroIdx={heroIdx}
-            muted={heroMuted}
-            accent={ACCENT}
-            onOpen={openVideo}
-            onToggleMute={() => setHeroMuted((m) => !m)}
-            onSetHero={setHeroIdx}
-          />
+          {heroList.length > 0 && (
+            <Hero
+              items={heroList}
+              heroIdx={Math.min(heroIdx, heroList.length - 1)}
+              muted={heroMuted}
+              accent={ACCENT}
+              onOpen={openVideo}
+              onToggleMute={() => setHeroMuted((m) => !m)}
+              onSetHero={setHeroIdx}
+              likedIds={likedIds}
+              onLike={onLike}
+            />
+          )}
 
-          <div style={{ position: 'relative', marginTop: -60, zIndex: 5, paddingBottom: 80 }}>
-            {SHOW_TOP10 && (
-              <Top10Row accent={ACCENT} accentSoft={ACCENT} accentDeep={ACCENT_DEEP} onOpen={openVideo} />
+          <div style={{ position: 'relative', marginTop: heroList.length > 0 ? -60 : 0, zIndex: 5, paddingBottom: 80 }}>
+            {top10.length > 0 && (
+              <Top10Row items={top10} accent={ACCENT} accentSoft={ACCENT} accentDeep={ACCENT_DEEP} onOpen={openVideo} likedIds={likedIds} onLike={onLike} />
             )}
 
             {rows.map((row) => (
               <div key={row.key}>
-                <CategoryRow row={row} accent={ACCENT} accentDeep={ACCENT_DEEP} onOpen={openVideo} />
+                <CategoryRow row={row} accent={ACCENT} accentDeep={ACCENT_DEEP} onOpen={openVideo} likedIds={likedIds} onLike={onLike} />
                 {row.ctaAfter && <CtaBanner accent={ACCENT} onOpenReq={() => setReqOpen(true)} />}
               </div>
             ))}
@@ -117,8 +143,8 @@ export default function App() {
         </div>
       )}
 
-      {modal && (
-        <VideoModal item={modal} allVideos={allVideos} accent={ACCENT} accentDeep={ACCENT_DEEP} onClose={closeModal} onOpen={openVideo} />
+      {modalItem && (
+        <VideoModal item={modalItem} allVideos={videos} accent={ACCENT} accentDeep={ACCENT_DEEP} onClose={closeModal} onOpen={openVideo} likedIds={likedIds} onLike={onLike} />
       )}
 
       {reqOpen && (

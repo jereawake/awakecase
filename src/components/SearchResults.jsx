@@ -1,6 +1,6 @@
 import VideoCard from './VideoCard';
 
-export default function SearchResults({ query, results, accent, accentDeep, onOpen }) {
+export default function SearchResults({ query, results, accent, accentDeep, onOpen, likedIds, onLike }) {
   return (
     <div style={{ padding: '104px 56px 60px', minHeight: '100vh', animation: 'awkFade .3s' }}>
       <div style={{ fontSize: 13, color: '#72A3C4', marginBottom: 6 }}>Resultados para</div>
@@ -10,7 +10,7 @@ export default function SearchResults({ query, results, accent, accentDeep, onOp
       )}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: 20 }}>
         {results.map((item) => (
-          <VideoCard key={item.id} item={item} accent={accent} accentDeep={accentDeep} onOpen={onOpen} variant="search" />
+          <VideoCard key={item.id} item={item} accent={accent} accentDeep={accentDeep} onOpen={onOpen} variant="search" liked={likedIds?.has(item.id)} onLike={onLike} />
         ))}
       </div>
     </div>
