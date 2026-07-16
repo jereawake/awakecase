@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { LikeButton } from './VideoCard';
 
-export default function Hero({ items: heroItems, heroIdx, muted, accent, onOpen, onToggleMute, onSetHero, likedIds, onLike }) {
+export default function Hero({ items: heroItems, heroIdx, accent, onOpen, onSetHero, likedIds, onLike }) {
   const heroARef = useRef(null);
   const heroBRef = useRef(null);
   const textRef = useRef(null);
@@ -14,7 +14,6 @@ export default function Hero({ items: heroItems, heroIdx, muted, accent, onOpen,
     const A = heroARef.current;
     if (A && !A.src) {
       A.src = heroItems[heroIdx].src;
-      A.muted = muted;
       frontRef.current = 'A';
       try {
         A.load();
@@ -36,7 +35,6 @@ export default function Hero({ items: heroItems, heroIdx, muted, accent, onOpen,
     if (!fEl || !bEl) return;
 
     bEl.src = heroItems[heroIdx].src;
-    bEl.muted = muted;
     bEl.dataset.done = '';
     const swap = () => {
       if (bEl.dataset.done) return;
@@ -59,11 +57,7 @@ export default function Hero({ items: heroItems, heroIdx, muted, accent, onOpen,
     }
 
     return () => clearTimeout(t);
-  }, [heroIdx, muted]);
-
-  useEffect(() => {
-    [heroARef.current, heroBRef.current].forEach((el) => { if (el) el.muted = muted; });
-  }, [muted]);
+  }, [heroIdx]);
 
   return (
     <section style={{ position: 'relative', height: '88vh', minHeight: 600, width: '100%', overflow: 'hidden' }}>
@@ -91,19 +85,14 @@ export default function Hero({ items: heroItems, heroIdx, muted, accent, onOpen,
         </div>
       </div>
 
-      <div style={{ position: 'absolute', right: 56, bottom: '15%', display: 'flex', alignItems: 'center', gap: 18 }}>
-        <div onClick={onToggleMute} className="awk-btn" style={{ width: 44, height: 44, borderRadius: '50%', border: '1.5px solid rgba(255,255,255,.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-          <span style={{ fontSize: 18 }}>{muted ? '🔇' : '🔊'}</span>
-        </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          {heroItems.map((it, i) => (
-            <div
-              key={it.id}
-              onClick={() => onSetHero(i)}
-              style={{ width: i === heroIdx ? 28 : 14, height: 4, borderRadius: 2, background: i === heroIdx ? accent : 'rgba(255,255,255,.35)', cursor: 'pointer', transition: 'all .3s' }}
-            />
-          ))}
-        </div>
+      <div style={{ position: 'absolute', right: 56, bottom: '15%', display: 'flex', alignItems: 'center', gap: 8 }}>
+        {heroItems.map((it, i) => (
+          <div
+            key={it.id}
+            onClick={() => onSetHero(i)}
+            style={{ width: i === heroIdx ? 28 : 14, height: 4, borderRadius: 2, background: i === heroIdx ? accent : 'rgba(255,255,255,.35)', cursor: 'pointer', transition: 'all .3s' }}
+          />
+        ))}
       </div>
     </section>
   );

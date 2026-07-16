@@ -20,7 +20,6 @@ export default function App() {
   const [navScrolled, setNavScrolled] = useState(false);
   const [query, setQuery] = useState('');
   const [heroIdx, setHeroIdx] = useState(0);
-  const [heroMuted, setHeroMuted] = useState(true);
   const [modal, setModal] = useState(null);
   const [reqOpen, setReqOpen] = useState(false);
   const [videos, setVideos] = useState([]);
@@ -116,10 +115,8 @@ export default function App() {
             <Hero
               items={heroList}
               heroIdx={Math.min(heroIdx, heroList.length - 1)}
-              muted={heroMuted}
               accent={ACCENT}
               onOpen={openVideo}
-              onToggleMute={() => setHeroMuted((m) => !m)}
               onSetHero={setHeroIdx}
               likedIds={likedIds}
               onLike={onLike}
